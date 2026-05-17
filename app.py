@@ -22,6 +22,26 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 blob_service = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 container = blob_service.get_container_client(CONTAINER_NAME)
 
+# =========================
+# FILE HELPERS
+# =========================
+def basename_only(path_value):
+    if not path_value:
+        return ""
+    return str(path_value).replace("\\", "/").split("/")[-1]
+
+
+def get_origin_pdf(obj):
+    for key in ("origin_pdf", "source_pdf", "pdf", "pdf_path", "source_file"):
+        value = obj.get(key)
+        if isinstance(value, str) and value.lower().endswith(".pdf"):
+            return basename_only(value)
+
+    for value in obj.values():
+        if isinstance(value, str) and value.lower().endswith(".pdf"):
+            return basename_only(value)
+
+    return ""
 
 # =========================
 # AZURE HELPERS
@@ -135,6 +155,7 @@ def load_index():
             items.append({
                 "image": image_name,
                 "file_name": image,
+                "origin_pdf": get_origin_pdf(obj),
                 "description": desc or "",
                 "visible_text": visible_text,
                 "raw": obj,
@@ -183,6 +204,7 @@ def search():
         if matches:
             results.append({
                 "image": item["image"],
+                "origin_pdf": item.get("origin_pdf",""),
                 "file_name": item.get("file_name", ""),
                 "description": item.get("description", ""),
                 "visible_text": item.get("visible_text", ""),
