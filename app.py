@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, Response, abort
+from flask import Flask, request, jsonify, render_template, Response, abort, session, redirect, url_for
 import json
 import os
 from azure.storage.blob import BlobServiceClient
@@ -18,6 +18,7 @@ JSONL_BLOB_NAME = os.environ.get(
 )
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
+app.secret_key = os.environ["FLASK_SECRET_KEY"]
 
 blob_service = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 container = blob_service.get_container_client(CONTAINER_NAME)
@@ -174,6 +175,9 @@ INDEX = load_index()
 
 @app.route("/")
 def index():
+    if not session.get("age_verified"):
+        return redirect(url_for("age_gate"))
+
     return render_template("index.html")
 
 
@@ -271,7 +275,19 @@ def reload_index():
         "status": "reloaded",
         "index_count": len(INDEX),
     })
+    
+@app.route("/age-gate", methods=["GET", "POST"])
+def age_gate():
+    if request.method == "POST":
+        over_18 = request.form.get("over_18")
 
+        if over_18 == "yes":
+            session["age_verified"] = True
+            return redirect(url_for("index"))
+
+        return render_template("age_gate.html", error="You must be 18 or older to enter.")
+
+    return render_template("age_gate.html")
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
