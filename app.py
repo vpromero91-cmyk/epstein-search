@@ -43,7 +43,12 @@ def get_origin_pdf(obj):
             return basename_only(value)
 
     return ""
+    
+def smart_match(query, text):
+    query_words = query.lower().split()
+    text_words = text.lower()
 
+    return all(word in text_words for word in query_words)
 # =========================
 # AZURE HELPERS
 # =========================
@@ -258,10 +263,10 @@ def search():
     for item in INDEX:
         matches = False
 
-        if search_description and q in item.get("description", "").lower():
+        if search_description and smart_match(q, item.get("description", "")):
             matches = True
 
-        if search_visible_text and q in item.get("visible_text", "").lower():
+        if search_visible_text and smart_match(q, item.get("visible_text", "")):
             matches = True
 
         if matches:
