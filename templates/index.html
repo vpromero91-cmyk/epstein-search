@@ -13,7 +13,7 @@
       .desc { font-size: 0.9rem; color: #333; margin-top: 6px; }
       .fname { font-size: 0.8rem; color: #666; margin-top: 4px; word-break: break-all; }
       .visible-text { font-size: 0.8rem; color: #444; margin-top: 6px; white-space: pre-wrap; max-height: 6em; overflow: hidden; }
-      
+
       /* Modal styles */
       .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
       .modal.show { display: flex; align-items: center; justify-content: center; }
@@ -30,20 +30,24 @@
   </head>
   <body>
     <h1>Image Search</h1>
+
     <form id="searchForm">
       <div style="margin-bottom:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <label style="display:flex; align-items:center; gap:6px;">
           <input id="searchDescription" type="checkbox" checked />
           Search image description
         </label>
+
         <label style="display:flex; align-items:center; gap:6px;">
           <input id="searchVisibleText" type="checkbox" checked />
           Search visible text
         </label>
       </div>
+
       <input id="q" type="search" placeholder="Search descriptions or visible text (e.g. baby)" style="width:70%; padding:8px" />
       <button type="submit" style="padding:8px 12px">Search</button>
     </form>
+
     <p id="status"></p>
     <div id="results" class="grid"></div>
     <div id="pagination"></div>
@@ -53,9 +57,7 @@
       <div class="modal-content">
         <span class="modal-close">&times;</span>
         <img id="modalImage" class="modal-image" src="" alt="" />
-        <div class="modal-info" id="modalInfo">
-          <!-- File paths will be inserted here dynamically -->
-        </div>
+        <div class="modal-info" id="modalInfo"></div>
       </div>
     </div>
 
