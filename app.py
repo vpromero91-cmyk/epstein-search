@@ -89,6 +89,77 @@ def find_image_blob(filename):
 # LOAD SEARCH INDEX
 # =========================
 
+def extract_dense_captions(obj):
+    captions = []
+
+    possible_keys = [
+        "dense_captions",
+        "denseCaptions",
+        "dense_caption",
+        "denseCaption",
+        "denseCaptionsResult",
+        "dense_captions_result",
+    ]
+
+    for key in possible_keys:
+        value = obj.get(key)
+
+        if isinstance(value, str):
+            captions.append(value)
+
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, str):
+                    captions.append(item)
+                elif isinstance(item, dict):
+                    text = item.get("text") or item.get("caption") or item.get("description")
+                    if isinstance(text, str):
+                        captions.append(text)
+
+        elif isinstance(value, dict):
+            values = value.get("values") or value.get("captions") or value.get("results")
+
+            if isinstance(values, list):
+                for item in values:
+                    if isinstance(item, dict):
+                        text = item.get("text") or item.get("caption") or item.get("description")
+                        if isinstance(text, str):
+                            captions.append(text)
+                    elif isinstance(item, str):
+                        captions.append(item)
+
+            text = value.get("text") or value.get("caption") or value.get("description")
+            if isinstance(text, str):
+                captions.append(text)
+
+    return captions
+
+
+def extract_description(obj):
+    parts = []
+
+    # Main caption fields
+    for key in ("description", "caption", "alt", "text", "desc"):
+        value = obj.get(key)
+        if isinstance(value, str) and value.strip():
+            parts.append(value.strip())
+
+    # Azure dense captions
+    parts.extend(extract_dense_captions(obj))
+
+    # Remove duplicates while preserving order
+    cleaned = []
+    seen = set()
+
+    for part in parts:
+        part = str(part).strip()
+        if part and part.lower() not in seen:
+            cleaned.append(part)
+            seen.add(part.lower())
+
+    return " | ".join(cleaned)
+
+
 def load_index():
     items = []
 
@@ -112,13 +183,11 @@ def load_index():
 
         image = None
 
-        # Try to find an image-like field
         for k, v in obj.items():
             if isinstance(v, str) and any(s in k.lower() for s in ("image", "file", "url", "path")):
                 image = v
                 break
 
-        # Fallback: look for values that look like filenames/paths
         if image is None:
             for v in obj.values():
                 if isinstance(v, str) and (
@@ -129,17 +198,7 @@ def load_index():
                     image = v
                     break
 
-        # Find descriptive text
-        desc = None
-        for key in ("description", "caption", "alt", "text", "desc"):
-            if key in obj and isinstance(obj[key], str):
-                desc = obj[key]
-                break
-
-        if desc is None:
-            strs = [v for v in obj.values() if isinstance(v, str)]
-            if strs:
-                desc = max(strs, key=len)
+        desc = extract_description(obj)
 
         visible_text_source = obj.get("visible_text")
 
